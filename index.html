@@ -1,3 +1,37 @@
-<h1>Health Exercises Counter Application</h1>
+<html>
+<header>
+    <style>
+        div {
+            font-family: fantasy;
+        }
+        #pause {
+            display: none;
+            background-color: brown;
+            color: white;
+        }
+        #done {
+            display: none;
+            background-color: green;
+            color: white;
+        }
+    </style>
+    <script type="module" src="app.js"></script>
+</header>
+<body>
+    <h1>Health Exercises Counter Application</h1>
+    
+    <div class="caption">
+        <div id="number-of-repeats"></div>
+    </div>
+    <div class="caption">
+        <div id="elapsed-time"></div>
+    </div>
+    <div id="pause">PAUSE</div>
+    <div id="done">DONE</div>
 
-<script type="module" src="app.js"></script>
+    <input id="start-button" type="button" value="Start" />
+    <input id="stop-button" type="button" value="Stop" />
+</body>
+
+</html>
+

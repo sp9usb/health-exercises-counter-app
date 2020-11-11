@@ -1,43 +1,45 @@
-function createExercise(profileService, profileName, updateCallback) {    
+function createExercise(profileService, profileName, updateCallback, sleepNotifyCallback, done) {    
     const profile = profileService.get(profileName);
     let isRunning = false;
 
     let elapsedRepeats = 0;
     let elapsedTime = 0;
 
-    function runExercises(counter) {
-        if(counter < profile.repeats && isRunning) {
-            wait(profile.repeatTime, () => {
-                elapsedTime++;
-                if (updateCallback) {
-                    updateCallback(elapsedRepeats, elapsedTime);
+    function sleep(timeout, interval, progressCallback, done) {
+        const startTimeInMilisecond = new Date().getTime();
+        setTimeout(function repeater() {
+            let totalTimeHasExpiredOrConditionIsTrue = (startTimeInMilisecond + timeout) < new Date().getTime();
+            if (totalTimeHasExpiredOrConditionIsTrue) {
+                done();
+            } else {
+                if (progressCallback && typeof(progressCallback) === 'function') {
+                    progressCallback(new Date().getTime() - startTimeInMilisecond);
                 }
-                runExercises(elapsedRepeats);
-            });
-            // setTimeout(() => {
-            //     elapsedTime++;
-            //     elapsedRepeats++;
-            //     if (updateCallback) {
-            //         updateCallback(elapsedRepeats, elapsedTime);
-            //     }
-            //     runExercises(elapsedRepeats);
-            // }, 1000);
-        } else {
-            console.log("Done");
-        }
+                setTimeout(repeater, interval);
+            }
+        }, interval);
     }
 
-    function wait(startTime, time, updateCallback, doneCallback) {        
-        if (Date.now() - startTime < time) {
-            setTimeout(() => {
-                if (updateCallback) {
-                    updateCallback(elapsedRepeats, elapsedTime);
-                }
-                wait(time, doneCallback);
-            }, 1);
+    function runExercises(counter) {
+        if(counter < profile.repeats && isRunning) {
+            sleep(profile.repeatTime * 1000, 1000, 
+                (time) =>{
+                    if (updateCallback) {
+                        updateCallback(elapsedRepeats, Math.floor(time / 1000));
+                    }
+                },
+                () => {
+                    console.log(`Pause ${profile.pauseTimeBetweenRepeats} [s]`);
+                    updateCallback(elapsedRepeats, profile.repeatTime);
+                    sleepNotifyCallback(true);
+                    sleep(profile.pauseTimeBetweenRepeats * 1000, 100, null, () => {
+                        sleepNotifyCallback(false);
+                        runExercises(elapsedRepeats++);
+                    });                   
+                });
         } else {
-            
-            doneCallback();
+            console.log("Done");
+            done();
         }
     }
     
@@ -49,7 +51,10 @@ function createExercise(profileService, profileName, updateCallback) {
             runExercises(elapsedRepeats);
         },
         'getElapsedRepeats': () => elapsedRepeats,
-        'getElapsedTime': () => elapsedTime
+        'getElapsedTime': () => elapsedTime,
+        'stop': () => {
+            isRunning = false;
+        }
     }
 }
 
