@@ -5,7 +5,7 @@ import { default as sounds } from './soundService.js';
 
 const profileService = createProfileService(permanentStorage);
 
-let newProfile = profileService.create('new-profile', 10, 10, 3);
+let newProfile = profileService.create('new-profile', 10, 10, 5);
 profileService.addOrUpdate(newProfile);
 profileService.save();
 
