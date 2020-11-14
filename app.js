@@ -18,7 +18,7 @@ const doneLabel = document.getElementById("done");
 
 let exercise = createExercise(profileService, "new-profile", (repeats, time) => {
     console.log(repeats, time);
-    numberOfRepeats.textContent = `Repeat: ${repeats + 1}`;
+    numberOfRepeats.textContent = `Repeat: ${repeats}`;
     elapsedTime.textContent = `Elapsed time: ${time} [s]`;
 },
     (isSleep) => {        

@@ -5,10 +5,11 @@ function createExercise(profileService, profileName, updateCallback, sleepNotify
     let elapsedRepeats = 0;
     let elapsedTime = 0;
 
-    function sleep(timeout, interval, progressCallback, done) {
+    function sleep(timeout, interval, progressCallback, done, cancel) {
         const startTimeInMilisecond = new Date().getTime();
         setTimeout(function repeater() {
-            let totalTimeHasExpiredOrConditionIsTrue = (startTimeInMilisecond + timeout) < new Date().getTime();
+            let totalTimeHasExpiredOrConditionIsTrue = (startTimeInMilisecond + timeout) < new Date().getTime() ||
+                                                       (cancel && typeof (cancel) === 'function' && cancel());
             if (totalTimeHasExpiredOrConditionIsTrue) {
                 done();
             } else {
@@ -20,8 +21,10 @@ function createExercise(profileService, profileName, updateCallback, sleepNotify
         }, interval);
     }
 
-    function runExercises(counter) {
-        if(counter < profile.repeats && isRunning) {
+    function runExercises() {
+        const isLast = elapsedRepeats == profile.repeats;
+
+        if(isRunning) {
             sleep(profile.repeatTime * 1000, 1000, 
                 (time) =>{
                     if (updateCallback) {
@@ -29,17 +32,22 @@ function createExercise(profileService, profileName, updateCallback, sleepNotify
                     }
                 },
                 () => {
-                    console.log(`Pause ${profile.pauseTimeBetweenRepeats} [s]`);
-                    updateCallback(elapsedRepeats, profile.repeatTime);
-                    sleepNotifyCallback(true);
-                    sleep(profile.pauseTimeBetweenRepeats * 1000, 100, null, () => {
-                        sleepNotifyCallback(false);
-                        runExercises(elapsedRepeats++);
-                    });                   
-                });
-        } else {
-            console.log("Done");
-            done();
+                    if (!isLast && isRunning) {
+                        console.log(`Pause ${profile.pauseTimeBetweenRepeats} [s]`);
+                        updateCallback(elapsedRepeats, profile.repeatTime);
+                        sleepNotifyCallback(true);
+                        sleep(profile.pauseTimeBetweenRepeats * 1000, 100, null, () => {
+                            sleepNotifyCallback(false);
+                            elapsedRepeats++;
+                            runExercises();
+                        });
+                    } else {
+                        console.log("Done");
+                        done();
+                    }                    
+                }, 
+                () => !isRunning
+            );
         }
     }
     
@@ -47,7 +55,7 @@ function createExercise(profileService, profileName, updateCallback, sleepNotify
         'start': () => {
             isRunning = true;
             elapsedTime = 0;
-            elapsedRepeats = 0;
+            elapsedRepeats = 1;
             runExercises(elapsedRepeats);
         },
         'getElapsedRepeats': () => elapsedRepeats,
